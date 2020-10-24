@@ -1,5 +1,5 @@
 const std = @import("std");
-const TarHeader = @import("header.zig").TarHeader;
+const extract = @import("extract.zig");
 
 fn usage() void {
     const stdout = std.io.getStdOut().outStream();
@@ -15,18 +15,32 @@ pub fn main() anyerror!void {
     defer arena.deinit();
     const alloc = &arena.allocator;
 
-    // Parse command.
+    // The first arg is the process name.
     var args = std.process.args();
-    std.debug.assert(args.skip()); // The first arg is the process name.
-    if (args.next(alloc)) |arg_iter| {
-        const cmd = try arg_iter;
-        if (std.mem.eql(u8, cmd, "extract")) {
-            @panic("TODO: Implement extract.");
-        } else if (std.mem.eql(u8, cmd, "archive")) {
-            @panic("TODO: Implement archive.");
-        } else {
+    std.debug.assert(args.skip());
+
+    // Push the arguments into a vector for convenience.
+    var args_array = std.ArrayList([]u8).init(alloc);
+    defer args_array.deinit();
+    while (args.next(alloc)) |arg_iter| {
+        const arg = try arg_iter;
+        try args_array.append(arg);
+    }
+
+    if (args_array.items.len < 1) {
+        usage();
+        return;
+    }
+    const cmd = args_array.items[0];
+    if (std.mem.eql(u8, cmd, "extract")) {
+        if (args_array.items.len < 2) {
             usage();
+            return;
         }
+        const file_name = args_array.items[1];
+        try extract.extractArchive(file_name, alloc);
+    } else if (std.mem.eql(u8, cmd, "archive")) {
+        @panic("TODO: Implement archive.");
     } else {
         usage();
     }
