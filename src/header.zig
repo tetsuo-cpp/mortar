@@ -1,3 +1,5 @@
+const expect = @import("std").testing.expect;
+
 // Mortar supports the UStar format.
 pub const TarHeader = packed struct {
     file_name: [100]u8,
@@ -16,4 +18,11 @@ pub const TarHeader = packed struct {
     device_major: [8]u8,
     device_minor: [8]u8,
     file_prefix: [155]u8,
+    padding: [12]u8,
 };
+
+test "TarHeader size check" {
+    comptime {
+        expect(@sizeOf(TarHeader) == 512);
+    }
+}
